@@ -1,4 +1,5 @@
 let midiAccess = null;
+let testMode = false; // Enables test mode
 
 // Default ADSR values
 let adsr = {
@@ -8,14 +9,15 @@ let adsr = {
   release: 0.5,
 };
 
-// Connect to MIDI devices
+// Connect to MIDI devices or enable test mode
 async function connectMIDI() {
   try {
     midiAccess = await navigator.requestMIDIAccess();
     console.log('MIDI Access granted:', midiAccess);
     populateMIDIInputs();
   } catch (error) {
-    console.error('Failed to access MIDI devices:', error);
+    console.warn('MIDI access failed or not available. Enabling Test Mode.');
+    enableTestMode();
   }
 }
 
@@ -38,7 +40,7 @@ function populateMIDIInputs() {
 function handleMIDIInputChange(event) {
   const inputId = event.target.value;
   const selectedInput = Array.from(midiAccess.inputs.values()).find(input => input.id === inputId);
-  
+
   if (selectedInput) {
     selectedInput.onmidimessage = logMIDIMessage;
   }
@@ -80,6 +82,31 @@ function logMIDIMessage(event) {
     log.value += `Status: ${status}, Data1: ${data1}, Data2: ${data2}\n`;
   }
   log.scrollTop = log.scrollHeight; // Auto-scroll to the latest message
+}
+
+// Enable test mode for MIDI simulation
+function enableTestMode() {
+  testMode = true;
+
+  const testButton = document.createElement('button');
+  testButton.textContent = 'Simulate MIDI Message';
+  testButton.id = 'simulate-midi';
+  testButton.addEventListener('click', simulateMIDIMessage);
+  document.getElementById('midi-interface').appendChild(testButton);
+
+  console.log('Test Mode Enabled: Use "Simulate MIDI Message" to generate events.');
+}
+
+// Simulate MIDI messages
+function simulateMIDIMessage() {
+  if (!testMode) return;
+
+  // Generate random MIDI note and velocity
+  const note = Math.floor(Math.random() * 128); // 0-127
+  const velocity = Math.floor(Math.random() * 128); // 0-127
+  const simulatedEvent = { data: [0x90, note, velocity] }; // Note On message
+
+  logMIDIMessage(simulatedEvent);
 }
 
 // Attach event listeners to ADSR sliders
