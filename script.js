@@ -1,5 +1,13 @@
 let midiAccess = null;
 
+// Default ADSR values
+let adsr = {
+  attack: 0.5,
+  decay: 0.5,
+  sustain: 0.5,
+  release: 0.5,
+};
+
 // Connect to MIDI devices
 async function connectMIDI() {
   try {
@@ -36,24 +44,6 @@ function handleMIDIInputChange(event) {
   }
 }
 
-// Log MIDI messages
-function logMIDIMessage(event) {
-  const log = document.getElementById('midi-log');
-  const [status, data1, data2] = event.data;
-  log.value += `Status: ${status}, Data1: ${data1}, Data2: ${data2}\n`;
-  log.scrollTop = log.scrollHeight; // Auto-scroll to the latest message
-}
-
-document.getElementById('connect').addEventListener('click', connectMIDI);
-
-// Default ADSR values
-let adsr = {
-  attack: 0.5,
-  decay: 0.5,
-  sustain: 0.5,
-  release: 0.5,
-};
-
 // Update ADSR values dynamically
 function updateADSR() {
   adsr.attack = parseFloat(document.getElementById('attack').value);
@@ -68,24 +58,8 @@ function updateADSR() {
   document.getElementById('release-value').textContent = adsr.release;
 }
 
-// Attach event listeners to sliders
-document.getElementById('attack').addEventListener('input', updateADSR);
-document.getElementById('decay').addEventListener('input', updateADSR);
-document.getElementById('sustain').addEventListener('input', updateADSR);
-document.getElementById('release').addEventListener('input', updateADSR);
-
 // Apply ADSR envelope to MIDI notes (example)
 function applyADSR(note, velocity) {
-  const currentTime = performance.now() / 1000;
-
-  // Simulate the ADSR envelope for demonstration purposes
-  console.log(`Note ${note} triggered with ADSR envelope:
-    Attack: ${adsr.attack}s,
-    Decay: ${adsr.decay}s,
-    Sustain: ${adsr.sustain},
-    Release: ${adsr.release}s`);
-  
-  // Example integration: Map velocity using ADSR
   const adjustedVelocity = Math.min(
     velocity * adsr.sustain + (1 - adsr.sustain),
     127
@@ -93,7 +67,7 @@ function applyADSR(note, velocity) {
   return adjustedVelocity;
 }
 
-// Modify MIDI message logging to include ADSR logic
+// Log MIDI messages with ADSR application
 function logMIDIMessage(event) {
   const log = document.getElementById('midi-log');
   const [status, data1, data2] = event.data;
@@ -107,3 +81,12 @@ function logMIDIMessage(event) {
   }
   log.scrollTop = log.scrollHeight; // Auto-scroll to the latest message
 }
+
+// Attach event listeners to ADSR sliders
+document.getElementById('attack').addEventListener('input', updateADSR);
+document.getElementById('decay').addEventListener('input', updateADSR);
+document.getElementById('sustain').addEventListener('input', updateADSR);
+document.getElementById('release').addEventListener('input', updateADSR);
+
+// Connect button listener
+document.getElementById('connect').addEventListener('click', connectMIDI);
