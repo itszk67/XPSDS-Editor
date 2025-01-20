@@ -1,0 +1,17 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+}
+
+#midi-interface {
+  margin-top: 20px;
+}
+
+textarea {
+  margin-top: 10px;
+  width: 100%;
+  max-width: 500px;
+  height: 200px;
+  resize: none;
+}
