@@ -1,5 +1,5 @@
 let midiAccess = null;
-let testMode = false; // Enables test mode
+let testMode = false;
 
 // Default ADSR values
 let adsr = {
@@ -9,22 +9,28 @@ let adsr = {
   release: 0.5,
 };
 
+const canvas = document.createElement('canvas');
+canvas.id = 'adsr-canvas';
+canvas.width = 500;
+canvas.height = 200;
+document.getElementById('adsr-editor').appendChild(canvas);
+const ctx = canvas.getContext('2d');
+
 // Connect to MIDI devices or enable test mode
 async function connectMIDI() {
   try {
     midiAccess = await navigator.requestMIDIAccess();
-    console.log('MIDI Access granted:', midiAccess);
     populateMIDIInputs();
   } catch (error) {
-    console.warn('MIDI access failed or not available. Enabling Test Mode.');
+    console.warn('MIDI access failed. Enabling Test Mode.');
     enableTestMode();
   }
 }
 
-// Populate MIDI inputs in the dropdown
+// Populate MIDI inputs
 function populateMIDIInputs() {
   const inputSelect = document.getElementById('midi-inputs');
-  inputSelect.innerHTML = ''; // Clear existing options
+  inputSelect.innerHTML = '';
 
   for (let input of midiAccess.inputs.values()) {
     const option = document.createElement('option');
@@ -36,11 +42,10 @@ function populateMIDIInputs() {
   inputSelect.addEventListener('change', handleMIDIInputChange);
 }
 
-// Handle MIDI input selection
 function handleMIDIInputChange(event) {
   const inputId = event.target.value;
   const selectedInput = Array.from(midiAccess.inputs.values()).find(input => input.id === inputId);
-
+  
   if (selectedInput) {
     selectedInput.onmidimessage = logMIDIMessage;
   }
@@ -53,38 +58,42 @@ function updateADSR() {
   adsr.sustain = parseFloat(document.getElementById('sustain').value);
   adsr.release = parseFloat(document.getElementById('release').value);
 
-  // Update displayed values
   document.getElementById('attack-value').textContent = adsr.attack;
   document.getElementById('decay-value').textContent = adsr.decay;
   document.getElementById('sustain-value').textContent = adsr.sustain;
   document.getElementById('release-value').textContent = adsr.release;
+
+  drawADSR();
 }
 
-// Apply ADSR envelope to MIDI notes (example)
-function applyADSR(note, velocity) {
-  const adjustedVelocity = Math.min(
-    velocity * adsr.sustain + (1 - adsr.sustain),
-    127
-  );
-  return adjustedVelocity;
+// Draw the ADSR envelope on the canvas
+function drawADSR() {
+  const width = canvas.width;
+  const height = canvas.height;
+  const padding = 10;
+  const totalDuration = adsr.attack + adsr.decay + adsr.release + 1; // Simplified
+
+  ctx.clearRect(0, 0, width, height);
+
+  // Map times to canvas coordinates
+  const attackX = (adsr.attack / totalDuration) * (width - 2 * padding);
+  const decayX = attackX + (adsr.decay / totalDuration) * (width - 2 * padding);
+  const sustainLevel = height - adsr.sustain * (height - 2 * padding);
+  const releaseX = decayX + ((1 / totalDuration) * (width - 2 * padding));
+
+  // Draw the envelope
+  ctx.beginPath();
+  ctx.moveTo(padding, height); // Start at bottom-left
+  ctx.lineTo(padding + attackX, padding); // Attack peak
+  ctx.lineTo(padding + decayX, sustainLevel); // Decay to sustain
+  ctx.lineTo(width - padding, sustainLevel); // Sustain level
+  ctx.lineTo(width - padding, height); // Release to baseline
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 2;
+  ctx.stroke();
 }
 
-// Log MIDI messages with ADSR application
-function logMIDIMessage(event) {
-  const log = document.getElementById('midi-log');
-  const [status, data1, data2] = event.data;
-
-  // Apply ADSR to Note On messages (status 0x90)
-  if ((status & 0xf0) === 0x90 && data2 > 0) {
-    const adjustedVelocity = applyADSR(data1, data2);
-    log.value += `Note On: ${data1}, Velocity: ${data2} → Adjusted: ${adjustedVelocity}\n`;
-  } else {
-    log.value += `Status: ${status}, Data1: ${data1}, Data2: ${data2}\n`;
-  }
-  log.scrollTop = log.scrollHeight; // Auto-scroll to the latest message
-}
-
-// Enable test mode for MIDI simulation
+// Enable test mode
 function enableTestMode() {
   testMode = true;
 
@@ -94,26 +103,39 @@ function enableTestMode() {
   testButton.addEventListener('click', simulateMIDIMessage);
   document.getElementById('midi-interface').appendChild(testButton);
 
-  console.log('Test Mode Enabled: Use "Simulate MIDI Message" to generate events.');
+  console.log('Test Mode Enabled.');
 }
 
 // Simulate MIDI messages
 function simulateMIDIMessage() {
   if (!testMode) return;
 
-  // Generate random MIDI note and velocity
-  const note = Math.floor(Math.random() * 128); // 0-127
-  const velocity = Math.floor(Math.random() * 128); // 0-127
-  const simulatedEvent = { data: [0x90, note, velocity] }; // Note On message
+  const note = Math.floor(Math.random() * 128);
+  const velocity = Math.floor(Math.random() * 128);
+  const simulatedEvent = { data: [0x90, note, velocity] };
 
   logMIDIMessage(simulatedEvent);
 }
 
-// Attach event listeners to ADSR sliders
+function logMIDIMessage(event) {
+  const log = document.getElementById('midi-log');
+  const [status, data1, data2] = event.data;
+
+  if ((status & 0xf0) === 0x90 && data2 > 0) {
+    log.value += `Note On: ${data1}, Velocity: ${data2}\n`;
+  } else {
+    log.value += `Status: ${status}, Data1: ${data1}, Data2: ${data2}\n`;
+  }
+  log.scrollTop = log.scrollHeight;
+}
+
+// Attach slider event listeners
 document.getElementById('attack').addEventListener('input', updateADSR);
 document.getElementById('decay').addEventListener('input', updateADSR);
 document.getElementById('sustain').addEventListener('input', updateADSR);
 document.getElementById('release').addEventListener('input', updateADSR);
 
-// Connect button listener
 document.getElementById('connect').addEventListener('click', connectMIDI);
+
+// Initialize the ADSR visualization
+drawADSR();
