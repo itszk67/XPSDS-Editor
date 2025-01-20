@@ -3,35 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MIDI Editor</title>
+  <title>MIDI Editor with ADSR</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>HTML5 MIDI Editor</h1>
+  <h1>MIDI Editor with ADSR Envelope</h1>
+  
   <div id="midi-interface">
     <button id="connect">Connect MIDI Device</button>
     <select id="midi-inputs"></select>
     <textarea id="midi-log" rows="10" cols="50" readonly></textarea>
   </div>
+  
+  <div id="adsr-editor">
+    <h2>ADSR Envelope Editor</h2>
+    <div class="slider">
+      <label for="attack">Attack: <span id="attack-value">0.5</span>s</label>
+      <input type="range" id="attack" min="0" max="5" step="0.1" value="0.5">
+    </div>
+    <div class="slider">
+      <label for="decay">Decay: <span id="decay-value">0.5</span>s</label>
+      <input type="range" id="decay" min="0" max="5" step="0.1" value="0.5">
+    </div>
+    <div class="slider">
+      <label for="sustain">Sustain: <span id="sustain-value">0.5</span></label>
+      <input type="range" id="sustain" min="0" max="1" step="0.1" value="0.5">
+    </div>
+    <div class="slider">
+      <label for="release">Release: <span id="release-value">0.5</span>s</label>
+      <input type="range" id="release" min="0" max="5" step="0.1" value="0.5">
+    </div>
+  </div>
+  
   <script src="script.js"></script>
-<div id="adsr-editor">
-  <h2>ADSR Envelope Editor</h2>
-  <div class="slider">
-    <label for="attack">Attack: <span id="attack-value">0.5</span>s</label>
-    <input type="range" id="attack" min="0" max="5" step="0.1" value="0.5">
-  </div>
-  <div class="slider">
-    <label for="decay">Decay: <span id="decay-value">0.5</span>s</label>
-    <input type="range" id="decay" min="0" max="5" step="0.1" value="0.5">
-  </div>
-  <div class="slider">
-    <label for="sustain">Sustain: <span id="sustain-value">0.5</span></label>
-    <input type="range" id="sustain" min="0" max="1" step="0.1" value="0.5">
-  </div>
-  <div class="slider">
-    <label for="release">Release: <span id="release-value">0.5</span>s</label>
-    <input type="range" id="release" min="0" max="5" step="0.1" value="0.5">
-  </div>
-</div>
 </body>
 </html>
